@@ -1,46 +1,64 @@
 // import { useGoogleLogin } from "@react-oauth/google";
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
 import CollapsableForm from "../CollapsableForm";
 import NarrowLayout from "../Wrappers/NarrowLayout";
 import { Button } from "../ui/button";
 import { Mail, Plus } from "lucide-react";
 import useStore from "@/store/store";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
+import { createObjectFromArray } from "@/utils";
+import { SendForm } from "@/type";
 // import { createObjectFromArray } from "@/utils";
 
-type GMailFrom = {
-  // name: string;
-  email: string;
-  // company: string;
-  variables: string[];
+export type SendFormsValues = {
+  forms: SendForm[];
 };
 
 function Send() {
-  const {template} = useStore()
-  const [forms, setForms] = useState<GMailFrom[]>([
-    {
-      email: "",
-      variables: template.variables,
+  const { template } = useStore();
+  const variableObj = useMemo(
+    () => createObjectFromArray(template.variables, ""),
+    [template.variables]
+  );
+  const { register, handleSubmit, control, watch } = useForm<SendFormsValues>({
+    defaultValues: {
+      forms: [
+        {
+          email: "",
+          variables: variableObj,
+        },
+      ],
     },
-  ]);
+  });
 
-const { register, handleSubmit } =  useForm<GMailFrom[]>()
+  useEffect(() => {
+    console.log(watch("forms"));
+  });
+
+  // Use field array for dynamic form fields
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "forms",
+  });
 
   const handleAddForm = () => {
-    setForms((prev) => [...prev,  {email: "", variables: template.variables}]);
-  };    
-   const handleRemoveForm = (index: number) => {
-     setForms(forms.filter((_, i) => i !== index));
-   };
+    append({
+      email: "",
+      variables: variableObj,
+    });
+  };
 
   return (
     <NarrowLayout>
-      <form action="">
-        {forms.map((form, index) => (
+      <form onSubmit={handleSubmit((data) => console.log(data))}>
+        {fields.map((form, index) => (
           <CollapsableForm
             key={index}
             index={index}
-            handleRemoveForm={handleRemoveForm}
+            handleRemoveForm={() => remove(index)}
+            formData={form}
+            register={register}
+            control={control}
           ></CollapsableForm>
         ))}
       </form>

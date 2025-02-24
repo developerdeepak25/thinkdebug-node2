@@ -8,27 +8,31 @@ import {
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { FormInput } from "./form-input";
 import { Button } from "./ui/button";
+import { Control, UseFormRegister, useWatch } from "react-hook-form";
+import { SendForm } from "@/type";
+import { SendFormsValues } from "./pages/Send";
 
 type CollapsableFormProps = {
   index: number;
-  formData?: any;
-  handleChange?: () => void;
+  formData: SendForm;
   handleRemoveForm: (index: number) => void;
+  register: UseFormRegister<SendFormsValues>;
+  control?: Control<SendFormsValues>;
 };
 
 const CollapsableForm = ({
   index,
   formData,
-  handleChange,
-  handleRemoveForm
-
+  register,
+  handleRemoveForm,
+  control
 }: CollapsableFormProps) => {
   const [isOpen, setIsOpen] = useState(true);
+  // Watch the email field in real-time
+  const email = useWatch({ control, name: `forms.${index}.email` });
+
   const getFormTitle = () => {
-    if (!formData?.email) {
-      return `Recipient ${index + 1} (No email entered)`;
-    }
-    return formData.email;
+    return email ? email : `Recipient ${index + 1} (No email entered)`;
   };
 
   return (
@@ -55,29 +59,19 @@ const CollapsableForm = ({
         <CollapsibleContent className="space-y-2 mt-6">
           <FormInput
             id="gmail"
-            name="gmail"
             type="mail"
             label="Enter your Gmail"
-            // direction="Enter variables separated by commas (e.g., name, email, company)"
-            value={""}
-            //   onChange={handleChange}
+            {...register(`forms.${index}.email`)}
           />
-          <FormInput
-            id="name"
-            name="name"
-            label="Name"
-            // direction="Enter variables separated by commas (e.g., name, email, company)"
-            value={""}
-            //   onChange={handleChange}
-          />
-          <FormInput
-            id="company"
-            name="company"
-            label="Company"
-            // direction="Enter variabl es separated by commas (e.g., name, email, company)"
-            value={""}
-            //   onChange={handleChange}
-          />
+          {Object.keys(formData.variables).length > 0 &&
+            Object.keys(formData.variables).map((variableKey, varIndex) => (
+              <FormInput
+                id={`forms.${index}.variables.${variableKey}`}
+                key={variableKey + "_collapsible_" + varIndex}
+                label={variableKey}
+                {...register(`forms.${index}.variables.${variableKey}`)}
+              />
+            ))}
         </CollapsibleContent>
       </Collapsible>
     </Card>
