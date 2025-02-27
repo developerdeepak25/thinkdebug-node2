@@ -1,12 +1,10 @@
 import { create } from "zustand";
-import createTemplateSlice, { TemplateStore } from "./slices/TemplateSlice";
+import createTemplateSlice, { TemplateStore } from "./slices/templateSlice";
 
+type StoreState = TemplateStore;
 
-type StoreState  = TemplateStore
+const useStore = create<StoreState>((...a) => ({
+  ...createTemplateSlice(...a),
+}));
 
-
-const useStore  = create<StoreState>((...a) => ({
-    ...createTemplateSlice(...a),
-}))
-
-export default useStore
+export default useStore;

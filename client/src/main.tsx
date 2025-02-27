@@ -7,6 +7,10 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Send from "./components/pages/Send.tsx";
 import Home from "./components/pages/Home.tsx";
 import Template from "./components/pages/Template.tsx";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
 
 const router = createBrowserRouter([
   {
@@ -18,13 +22,13 @@ const router = createBrowserRouter([
         element: <Send />,
       },
       {
-        path:'/',
-        element: <Home/>
+        path: "/",
+        element: <Home />,
       },
       {
-        path:'template',
-        element: <Template/>
-      }
+        path: "template",
+        element: <Template />,
+      },
     ],
   },
 ]);
@@ -32,7 +36,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_CLIENT_ID}>
-      <RouterProvider router={router} />{" "}
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />{" "}
+      </QueryClientProvider>
     </GoogleOAuthProvider>{" "}
   </StrictMode>
 );

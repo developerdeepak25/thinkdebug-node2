@@ -1,17 +1,23 @@
 import { Button } from "@/components/ui/button";
+
+import useStore from "@/store/store";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import TemplateCard from "../TemplateCard";
 
 export default function Home() {
+  const { template } = useStore();
+
+  useEffect(()=>{
+    console.log(template);
+    
+  },[template])
+
+  // Function to truncate text
+  
+
   return (
     <>
-      {/* <nav className="bg-background border-b" aria-label="Main navigation">
-        <div className="container mx-auto px-4 py-4 flex items-center">
-          <div className="flex items-center" aria-label="SmartSend logo">
-            <Send className="h-6 w-6 text-primary mr-2" aria-hidden="true" />
-            <span className="text-lg font-semibold">SmartSend</span>
-          </div>
-        </div>
-      </nav> */}
       <main className="container mx-auto px-4 pt-28 grow">
         <div className="flex flex-col items-center text-center">
           <h1 className="text-4xl font-bold tracking-tight mb-4">
@@ -27,11 +33,33 @@ export default function Home() {
             </Link>
           </Button>
         </div>
+
         {/* Templates listing section */}
-        <div className="border-t my-16 flex justify-center items-center">
-          <h1 className="text-2xl font-medium pt-20 text-slate-700">
-            Your Templates apper here
-          </h1>
+        <div className="border-t my-16">
+          <h2 className="text-2xl font-medium pt-10 text-slate-700 text-center">
+            Your Templates
+          </h2>
+          <div className="mt-10">
+            {/* //!currently showing only one template for testing afterwords will add functionality to add multiple templates. store currently can only have one */}
+            {template && Object.entries(template).length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* //TODO:  */}
+                {[template].map((template, index) => (
+                  <TemplateCard
+                    key={index}
+                    title={template.name}
+                    content={template.content}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex justify-center items-center h-40">
+                <p className="text-muted-foreground">
+                  Your templates will appear here
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </>
