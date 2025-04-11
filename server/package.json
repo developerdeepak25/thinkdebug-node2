@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node app.ts",
-    "dev": "nodemon app.ts"
+    "dev": "nodemon"
   },
   "keywords": [],
   "author": "",
@@ -18,14 +18,17 @@
     "express-session": "^1.18.1",
     "googleapis": "^144.0.0",
     "http-errors": "^2.0.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "tsx": "^4.19.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.1",
     "@types/morgan": "^1.9.9",
-    "@types/node": "^22.13.1",
-    "nodemon": "^3.1.9"
+    "@types/node": "^22.13.5",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }

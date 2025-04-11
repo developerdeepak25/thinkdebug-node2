@@ -8,13 +8,11 @@ import TemplateCard from "../TemplateCard";
 export default function Home() {
   const { template } = useStore();
 
-  useEffect(()=>{
+  useEffect(() => {
     console.log(template);
-    
-  },[template])
+  }, [template]);
 
   // Function to truncate text
-  
 
   return (
     <>

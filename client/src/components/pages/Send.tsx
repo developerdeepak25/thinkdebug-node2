@@ -17,8 +17,8 @@ export type SendFormsValues = {
 function Send() {
   const { template } = useStore();
   const variableObj = useMemo(
-    () => createObjectFromArray(template.variables, ""),
-    [template.variables]
+    () => createObjectFromArray(template?.variables ?? [], ""),
+    [template?.variables]
   );
   const { register, handleSubmit, control, watch } = useForm<SendFormsValues>({
     defaultValues: {

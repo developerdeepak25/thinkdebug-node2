@@ -3,10 +3,14 @@ import { google } from "googleapis";
 import type { RequestHandler } from "express";
 import Session from "express-session";
 
-interface SendEmailBody {
+interface EmailData {
   to: string;
   subject: string;
   body: string;
+}
+
+interface SendEmailBody {
+  emails: EmailData[];
 }
 
 // Extend express-session types
@@ -90,7 +94,7 @@ router.post("/store-token", async (req, res) => {
 
 const sendEmailHandler: RequestHandler = async (req, res): Promise<void> => {
   try {
-    // const { to, subject, body } = req.body as SendEmailBody;
+    const { emails } = req.body as SendEmailBody;
 
     if (!req.session?.accessToken) {
       res.status(401).json({ error: "No access token found" });
@@ -110,43 +114,48 @@ const sendEmailHandler: RequestHandler = async (req, res): Promise<void> => {
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    // const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString(
-    const utf8Subject = `=?utf-8?B?${Buffer.from("this is a subject").toString(
-      "base64"
-    )}?=`;
-    const messageParts = [
-      `To: developer.deepak25@gmail.com`,
-      // `To: ${to}`,
-      "Content-Type: text/plain; charset=utf-8",
-      "MIME-Version: 1.0",
-      `Subject: ${utf8Subject}`,
-      "",
-      // body,
-      "this is supposed to be the body",
-    ];
-    const message = messageParts.join("\n");
+    const results = await Promise.all(
+      emails.map(async (email) => {
+        const utf8Subject = `=?utf-8?B?${Buffer.from(email.subject).toString(
+          "base64"
+        )}?=`;
 
-    const encodedMessage = Buffer.from(message)
-      .toString("base64")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
+        const messageParts = [
+          `To: ${email.to}`,
+          "Content-Type: text/plain; charset=utf-8",
+          "MIME-Version: 1.0",
+          `Subject: ${utf8Subject}`,
+          "",
+          email.body,
+        ];
 
-    const result = await gmail.users.messages.send({
-      userId: "me",
-      requestBody: {
-        raw: encodedMessage,
-      },
+        const message = messageParts.join("\n");
+        const encodedMessage = Buffer.from(message)
+          .toString("base64")
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+
+        return gmail.users.messages.send({
+          userId: "me",
+          requestBody: {
+            raw: encodedMessage,
+          },
+        });
+      })
+    );
+
+    res.json({
+      status: "success",
+      results: results.map((result) => result.data),
     });
-
-    res.json(result.data);
   } catch (error: any) {
-    console.error("Error sending email:", error);
+    console.error("Error sending emails:", error);
     if (error.code === 401) {
       req.session.accessToken = undefined;
       res.status(401).json({ error: "Authentication required" });
     } else {
-      res.status(500).json({ error: "Failed to send email" });
+      res.status(500).json({ error: "Failed to send emails" });
     }
   }
 };

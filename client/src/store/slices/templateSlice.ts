@@ -3,12 +3,13 @@ import { persist } from "zustand/middleware";
 
 type TemplateType = {
   name: string;
+  subject: string;
   variables: string[];
   content: string;
 };
 
 interface TemplateStore {
-  template: TemplateType;
+  template: TemplateType | null;
   addTemplate: (template: TemplateType) => void;
   updateTemplate: (update: Partial<TemplateType>) => void;
 }
@@ -19,15 +20,13 @@ const createTemplateSlice: StateCreator<
   [["zustand/persist", TemplateStore]]
 > = persist(
   (set) => ({
-    template: {
-      name: "",
-      variables: [],
-      content: "",
-    },
+    template: null,
     addTemplate: (template) => set({ template }),
-    //exprected updateTemplate({name | variables | content: 'newValue'})
     updateTemplate: (update) =>
-      set((state) => ({ template: { ...state.template, ...update } })),
+      set((state) => {
+        if (!state.template) return state;
+        return { template: { ...state.template, ...update } };
+      }),
   }),
   {
     name: "template-storage", // Key for localStorage

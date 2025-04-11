@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 export type FormValues = {
   name: string;
+  subject: string;
   variables: string[];
   content: string;
 };
@@ -29,7 +30,7 @@ export default function Template() {
     },
   });
   const { addTemplate, template } = useStore();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   useEffect(() => {
     console.log(template);
   }, [template]);
@@ -38,7 +39,7 @@ export default function Template() {
     console.log(data);
     addTemplate(data);
     reset(); // may not be needed as will redirest to create | send page
-    navigate('/send')
+    navigate("/send");
   };
 
   return (
@@ -54,6 +55,15 @@ export default function Template() {
           direction="Enter a unique name for your template"
           error={errors.name}
         />
+        <FormInput
+          id="subject"
+          {...register("subject", {
+            required: "Email subject is required",
+          })}
+          label="Email Subject"
+          direction="Enter the subject line for your email template"
+          error={errors.subject}
+        />
         <InputWithBadges<FormValues>
           control={control}
           name="variables"
@@ -67,7 +77,7 @@ export default function Template() {
           id="content"
           label="Template Content "
           direction="Write your email template here. Use {{variable}} syntax for dynamic content"
-          {...register("content", { required: 'Template content is required' })}
+          {...register("content", { required: "Template content is required" })}
           rows={10}
           error={errors.content}
         />
