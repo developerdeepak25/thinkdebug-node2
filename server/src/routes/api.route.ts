@@ -114,40 +114,88 @@ const sendEmailHandler: RequestHandler = async (req, res): Promise<void> => {
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    const results = await Promise.all(
+    const emailResults = await Promise.allSettled(
       emails.map(async (email) => {
-        const utf8Subject = `=?utf-8?B?${Buffer.from(email.subject).toString(
-          "base64"
-        )}?=`;
+        try {
+          const utf8Subject = `=?utf-8?B?${Buffer.from(email.subject).toString(
+            "base64"
+          )}?=`;
+          const messageParts = [
+            `To: ${email.to}`,
+            "Content-Type: text/plain; charset=utf-8",
+            "MIME-Version: 1.0",
+            `Subject: ${utf8Subject}`,
+            "",
+            email.body,
+          ];
 
-        const messageParts = [
-          `To: ${email.to}`,
-          "Content-Type: text/plain; charset=utf-8",
-          "MIME-Version: 1.0",
-          `Subject: ${utf8Subject}`,
-          "",
-          email.body,
-        ];
+          const message = messageParts.join("\n");
+          const encodedMessage = Buffer.from(message)
+            .toString("base64")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
 
-        const message = messageParts.join("\n");
-        const encodedMessage = Buffer.from(message)
-          .toString("base64")
-          .replace(/\+/g, "-")
-          .replace(/\//g, "_")
-          .replace(/=+$/, "");
+          const result = await gmail.users.messages.send({
+            userId: "me",
+            requestBody: {
+              raw: encodedMessage,
+            },
+          });
 
-        return gmail.users.messages.send({
-          userId: "me",
-          requestBody: {
-            raw: encodedMessage,
-          },
-        });
+          return {
+            to: email.to,
+            status: "success",
+            messageId: result.data.id,
+            threadId: result.data.threadId,
+          };
+        } catch (error: any) {
+          return {
+            to: email.to,
+            status: "failed",
+            error: error.message,
+          };
+        }
       })
     );
 
+    const summary = emailResults.reduce(
+      (acc, result) => {
+        if (
+          result.status === "fulfilled" &&
+          result.value.status === "success"
+        ) {
+          acc.successCount++;
+          acc.successful.push(result.value);
+        } else {
+          acc.failureCount++;
+          acc.failed.push(
+            result.status === "rejected"
+              ? { to: "unknown", status: "failed", error: result.reason }
+              : result.value
+          );
+        }
+        return acc;
+      },
+      {
+        successCount: 0,
+        failureCount: 0,
+        successful: [] as any[],
+        failed: [] as any[],
+      }
+    );
+
     res.json({
-      status: "success",
-      results: results.map((result) => result.data),
+      status: summary.failureCount === 0 ? "success" : "partial",
+      summary: {
+        total: emails.length,
+        successful: summary.successCount,
+        failed: summary.failureCount,
+      },
+      details: {
+        successful: summary.successful,
+        failed: summary.failed,
+      },
     });
   } catch (error: any) {
     console.error("Error sending emails:", error);
@@ -155,7 +203,11 @@ const sendEmailHandler: RequestHandler = async (req, res): Promise<void> => {
       req.session.accessToken = undefined;
       res.status(401).json({ error: "Authentication required" });
     } else {
-      res.status(500).json({ error: "Failed to send emails" });
+      res.status(500).json({
+        status: "error",
+        error: "Failed to send emails",
+        details: error.message,
+      });
     }
   }
 };
