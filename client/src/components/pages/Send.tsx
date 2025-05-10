@@ -1,25 +1,18 @@
-import {  useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import CollapsableForm from "../CollapsableForm";
 import NarrowLayout from "../Wrappers/NarrowLayout";
 import { Button } from "../ui/button";
 import { Mail, Plus } from "lucide-react";
 import useStore from "@/store/store";
 import { useFieldArray, useForm } from "react-hook-form";
-import { createObjectFromArray, getFormsWithContent } from "@/utils";
+import { createObjectFromArray } from "@/utils";
 import { SendForm } from "@/type";
-import { useMutation } from "@tanstack/react-query";
-import { useGoogleLogin } from "@react-oauth/google";
 import EmailSendResultModal, { EmailSendResult } from "../EmailSendResultModal";
+import useSendEmails from "@/hooks/useSendEmails";
 
 export type SendFormsValues = {
   forms: SendForm[];
 };
-type EmailData = {
-  to: string;
-  subject: string;
-  body: string;
-};
-type EmailsData = { forms: EmailData[] };
 
 function Send() {
   const { template } = useStore();
@@ -31,75 +24,16 @@ function Send() {
   const [modalOpen, setModalOpen] = useState(false);
   const [sendResult, setSendResult] = useState<EmailSendResult | null>(null);
 
-  // Mutation for sending emails
-  const {
-    mutate: sendEmails,
-    isPending: isSending,
-    isError: isSendError,
-    error: sendError,
-    reset: resetSend,
-    isSuccess: isSendSuccess,
-  } = useMutation({
-    mutationFn: async (data: EmailsData) => {
-      const res = await fetch("http://localhost:3000/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+  const { register, handleSubmit, control, getValues,reset } = useForm<SendFormsValues>({
+    defaultValues: {
+      forms: [
+        {
+          email: "",
+          variables: variableObj,
         },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to send emails");
-      }
-      return res.json();
-    },
-    onSuccess: (data) => {
-      setSendResult(data);
-      setModalOpen(true);
+      ],
     },
   });
-
-  // Mutation for storing token
-  const {
-    mutateAsync: storeToken,
-    isPending: isTokenStoring,
-    isError: isTokenError,
-    error: tokenError,
-    reset: resetToken,
-  } = useMutation({
-    mutationFn: async (code: string) => {
-      const res = await fetch("http://localhost:3000/api/store-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code }),
-        credentials: "include",
-      });
-      if (!res.ok) {
-        throw new Error("Failed to store token");
-      }
-      return res.json();
-    },
-  });
-
-  const { register, handleSubmit, control,  getValues } =
-    useForm<SendFormsValues>({
-      defaultValues: {
-        forms: [
-          {
-            email: "",
-            variables: variableObj,
-          },
-        ],
-      },
-    });
-
-  // useEffect(() => {
-  //   console.log(watch("forms"));
-  // });
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -113,51 +47,23 @@ function Send() {
     });
   };
 
-  // Google OAuth for Gmail access
-  const requestGmailAccess = useGoogleLogin({
-    flow: "auth-code",
-    scope:
-      "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly",
-    onSuccess: async (codeResponse) => {
-      try {
-        await storeToken(codeResponse.code);
-        await doSendEmails();
-      } catch (err) {
-        console.error("Error storing token:", err);
-        // error handled by mutation
-      }
-    },
-    onError: (errorResponse) => {
-      console.error("Login Failed:", errorResponse);
-      // error handled by mutation
-    },
+  // Use custom hook for all mutation and onSubmit logic
+  const {
+    onSubmit,
+    isSending,
+    isTokenStoring,
+    isSendError,
+    isTokenError,
+    sendError,
+    tokenError,
+    isSendSuccess,
+  } = useSendEmails({
+    template: template!,
+    formValues: getValues(),
+    setModalOpen,
+    setSendResult,
+    reset
   });
-
-  // Helper to send emails with content
-  const doSendEmails = async () => {
-    const values = getValues();
-    const formsWithContent = getFormsWithContent(values, template!);
-    sendEmails({ forms: formsWithContent });
-  };
-
-  // Handler for Send Emails button
-  const onSubmit = async () => {
-    resetSend();
-    resetToken();
-    try {
-      const tokenCheck = await fetch("http://localhost:3000/api/check-token", {
-        credentials: "include",
-      });
-      if (tokenCheck.ok) {
-        await doSendEmails();
-      } else {
-        requestGmailAccess();
-      }
-    } catch (err) {
-      console.error("Error checking token:", err);
-      requestGmailAccess();
-    }
-  };
 
   return (
     <NarrowLayout>
