@@ -19,7 +19,7 @@
     "googleapis": "^144.0.0",
     "http-errors": "^2.0.0",
     "morgan": "^1.10.0",
-    "tsx": "^4.19.3"
+    "tsx": "^4.19.4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

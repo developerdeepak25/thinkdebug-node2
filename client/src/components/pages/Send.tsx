@@ -8,7 +8,7 @@ import useStore from "@/store/store";
 import { useFieldArray, useForm } from "react-hook-form";
 import { createObjectFromArray } from "@/utils";
 import { SendForm } from "@/type";
-// import { createObjectFromArray } from "@/utils";
+import { useMutation } from "@tanstack/react-query";
 
 export type SendFormsValues = {
   forms: SendForm[];
@@ -20,6 +20,28 @@ function Send() {
     () => createObjectFromArray(template?.variables ?? [], ""),
     [template?.variables]
   );
+  // useMuatioan
+  const { mutate } = useMutation({
+    mutationFn: async (data: SendFormsValues) => {
+      console.log("Sending emails", data);
+      const res = await fetch("http://localhost:3000/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      console.log("Emails sent successfully", data);
+    },
+    onError: (error) => {
+      console.error("Error sending emails", error);
+    },
+  });
+
   const { register, handleSubmit, control, watch } = useForm<SendFormsValues>({
     defaultValues: {
       forms: [
@@ -48,9 +70,33 @@ function Send() {
     });
   };
 
+  // onSubmit function to handle form submission
+  const onSubmit = (data: SendFormsValues) => {
+
+    console.log("Form data", data); //?dev
+
+    // Prepare forms with content having variables replaced
+    const formsWithContent = data.forms.map((form) => {
+      let content = template?.content || "";
+      // Replace all {{variable}} with the value from form.variables
+      content = content.replace(/{{\s*([\w\d_]+)\s*}}/g, (_, varName) => {
+        return form.variables[varName] ?? "";
+      });
+      return {
+        ...form,
+        content,
+      };
+    });
+
+    console.log("Forms with content", formsWithContent); //?dev
+
+    // Send the modified forms
+    mutate({ forms: formsWithContent });
+  };
+
   return (
     <NarrowLayout>
-      <form onSubmit={handleSubmit((data) => console.log(data))}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         {fields.map((form, index) => (
           <CollapsableForm
             key={index}
@@ -61,20 +107,21 @@ function Send() {
             control={control}
           ></CollapsableForm>
         ))}
+        <div className="mb-6 flex justify-between items-center">
+          <Button onClick={handleAddForm} className="flex items-center gap-2">
+            <Plus size={16} />
+            Add Form
+          </Button>
+          <Button
+            // onClick={handleSendEmails}
+            className="flex items-center gap-2"
+            type="submit"
+          >
+            <Mail size={16} />
+            Send Emails
+          </Button>
+        </div>
       </form>
-      <div className="mb-6 flex justify-between items-center">
-        <Button onClick={handleAddForm} className="flex items-center gap-2">
-          <Plus size={16} />
-          Add Form
-        </Button>
-        <Button
-          // onClick={handleSendEmails}
-          className="flex items-center gap-2"
-        >
-          <Mail size={16} />
-          Send Emails
-        </Button>
-      </div>
     </NarrowLayout>
   );
 }

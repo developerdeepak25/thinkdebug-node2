@@ -159,6 +159,8 @@ const sendEmailHandler: RequestHandler = async (req, res): Promise<void> => {
       })
     );
 
+    console.log("emailResults", emailResults); //?dev
+
     const summary = emailResults.reduce(
       (acc, result) => {
         if (
@@ -184,6 +186,8 @@ const sendEmailHandler: RequestHandler = async (req, res): Promise<void> => {
         failed: [] as any[],
       }
     );
+
+    console.log("summary", summary); //?dev
 
     res.json({
       status: summary.failureCount === 0 ? "success" : "partial",
