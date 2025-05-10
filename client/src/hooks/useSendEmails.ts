@@ -5,14 +5,14 @@ import { useCallback, useRef } from "react";
 import { EmailSendResult } from "../components/EmailSendResultModal";
 import { SendFormsValues, TemplateType } from "@/type";
 import { toast } from "sonner";
-import { UseFormReset } from "react-hook-form";
+// import { UseFormReset } from "react-hook-form";
 
 type UseSendEmailsProps = {
   template: TemplateType;
   formValues: SendFormsValues;
   setModalOpen: (open: boolean) => void;
   setSendResult: (result: EmailSendResult | null) => void;
-  reset: UseFormReset<SendFormsValues>;
+//   reset: UseFormReset<SendFormsValues>;
 };
 
 type EmailsData = { forms: { to: string; subject: string; body: string }[] };
@@ -22,7 +22,7 @@ export default function useSendEmails({
   formValues,
   setModalOpen,
   setSendResult,
-  reset,
+//   reset,
 }: UseSendEmailsProps) {
   // Store refs to always have latest setModalOpen/setSendResult in callbacks
   const setModalOpenRef = useRef(setModalOpen);
@@ -57,7 +57,7 @@ export default function useSendEmails({
     onSuccess: (data) => {
       setSendResultRef.current(data);
       setModalOpenRef.current(true);
-      reset()
+    //   reset()
     },
   });
 

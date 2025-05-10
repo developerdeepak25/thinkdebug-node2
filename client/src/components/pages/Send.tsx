@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CollapsableForm from "../CollapsableForm";
 import NarrowLayout from "../Wrappers/NarrowLayout";
 import { Button } from "../ui/button";
@@ -6,13 +6,23 @@ import { Mail, Plus } from "lucide-react";
 import useStore from "@/store/store";
 import { useFieldArray, useForm } from "react-hook-form";
 import { createObjectFromArray } from "@/utils";
-import { SendForm } from "@/type";
+// import { SendForm } from "@/type";
 import EmailSendResultModal, { EmailSendResult } from "../EmailSendResultModal";
 import useSendEmails from "@/hooks/useSendEmails";
+// --- add zod imports ---
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-export type SendFormsValues = {
-  forms: SendForm[];
-};
+const variableSchema = z.record(z.string().min(1, "vaiable is required"));
+const sendFormSchema = z.object({
+  email: z.string().email("Invalid email").min(1, "Email is required"),
+  variables: variableSchema,
+});
+const sendFormsSchema = z.object({
+  forms: z.array(sendFormSchema).min(1),
+});
+
+export type SendFormsValues = z.infer<typeof sendFormsSchema>;
 
 function Send() {
   const { template } = useStore();
@@ -24,7 +34,15 @@ function Send() {
   const [modalOpen, setModalOpen] = useState(false);
   const [sendResult, setSendResult] = useState<EmailSendResult | null>(null);
 
-  const { register, handleSubmit, control, getValues,reset } = useForm<SendFormsValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    getValues,
+    // reset,
+    formState: { errors },
+  } = useForm<SendFormsValues>({
+    resolver: zodResolver(sendFormsSchema),
     defaultValues: {
       forms: [
         {
@@ -47,7 +65,10 @@ function Send() {
     });
   };
 
-  // Use custom hook for all mutation and onSubmit logic
+  useEffect(() => {
+    console.log("erros", errors?.forms?.[0]?.variables?.company?.message);
+  });
+
   const {
     onSubmit,
     isSending,
@@ -62,7 +83,7 @@ function Send() {
     formValues: getValues(),
     setModalOpen,
     setSendResult,
-    reset
+    // reset,
   });
 
   return (
@@ -76,6 +97,7 @@ function Send() {
             formData={form}
             register={register}
             control={control}
+            errors={errors?.forms?.[index]}
           ></CollapsableForm>
         ))}
         <div className="mb-6 flex justify-between items-center">
@@ -103,6 +125,10 @@ function Send() {
         )}
         {isSendSuccess && (
           <div className="text-green-600 mb-2">Emails sent successfully!</div>
+        )}
+        {/* Show form-level errors */}
+        {errors?.forms && typeof errors.forms?.message === "string" && (
+          <div className="text-red-500 mb-2">{errors.forms.message}</div>
         )}
       </form>
       <EmailSendResultModal

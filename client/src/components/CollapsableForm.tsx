@@ -11,6 +11,7 @@ import { Button } from "./ui/button";
 import { Control, UseFormRegister, useWatch } from "react-hook-form";
 import { SendForm } from "@/type";
 import { SendFormsValues } from "./pages/Send";
+// import { FieldErrors } from "react-hook-form";
 
 type CollapsableFormProps = {
   index: number;
@@ -18,6 +19,7 @@ type CollapsableFormProps = {
   handleRemoveForm: (index: number) => void;
   register: UseFormRegister<SendFormsValues>;
   control?: Control<SendFormsValues>;
+  errors?: any; // Accept errors for this form
 };
 
 const CollapsableForm = ({
@@ -25,7 +27,8 @@ const CollapsableForm = ({
   formData,
   register,
   handleRemoveForm,
-  control
+  control,
+  errors,
 }: CollapsableFormProps) => {
   const [isOpen, setIsOpen] = useState(true);
   // Watch the email field in real-time
@@ -62,6 +65,7 @@ const CollapsableForm = ({
             type="mail"
             label="Enter your Gmail"
             {...register(`forms.${index}.email`)}
+            error={errors?.email}
           />
           {Object.keys(formData.variables).length > 0 &&
             Object.keys(formData.variables).map((variableKey, varIndex) => (
@@ -70,6 +74,7 @@ const CollapsableForm = ({
                 key={variableKey + "_collapsible_" + varIndex}
                 label={variableKey}
                 {...register(`forms.${index}.variables.${variableKey}`)}
+                error={errors?.variables?.[variableKey]}
               />
             ))}
         </CollapsibleContent>
