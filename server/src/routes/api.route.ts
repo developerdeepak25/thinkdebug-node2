@@ -10,7 +10,7 @@ interface EmailData {
 }
 
 interface SendEmailBody {
-  emails: EmailData[];
+  forms: EmailData[];
 }
 
 // Extend express-session types
@@ -94,7 +94,9 @@ router.post("/store-token", async (req, res) => {
 
 const sendEmailHandler: RequestHandler = async (req, res): Promise<void> => {
   try {
-    const { emails } = req.body as SendEmailBody;
+    const { forms: emails } = req.body as SendEmailBody;
+    console.log("emails", emails); //?dev
+    console.log("req.session", req.body); //?dev
 
     if (!req.session?.accessToken) {
       res.status(401).json({ error: "No access token found" });
