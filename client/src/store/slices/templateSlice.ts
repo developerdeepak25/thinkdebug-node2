@@ -1,12 +1,13 @@
+import { TemplateType } from "@/type";
 import { StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 
-type TemplateType = {
-  name: string;
-  subject: string;
-  variables: string[];
-  content: string;
-};
+// export type TemplateType = {
+//   name: string;
+//   subject: string;
+//   variables: string[];
+//   content: string;
+// };
 
 interface TemplateStore {
   template: TemplateType | null;

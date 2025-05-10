@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import {  useMemo, useState } from "react";
 import CollapsableForm from "../CollapsableForm";
 import NarrowLayout from "../Wrappers/NarrowLayout";
 import { Button } from "../ui/button";
 import { Mail, Plus } from "lucide-react";
 import useStore from "@/store/store";
 import { useFieldArray, useForm } from "react-hook-form";
-import { createObjectFromArray } from "@/utils";
+import { createObjectFromArray, getFormsWithContent } from "@/utils";
 import { SendForm } from "@/type";
 import { useMutation } from "@tanstack/react-query";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -85,7 +85,7 @@ function Send() {
     },
   });
 
-  const { register, handleSubmit, control, watch, getValues } =
+  const { register, handleSubmit, control,  getValues } =
     useForm<SendFormsValues>({
       defaultValues: {
         forms: [
@@ -97,9 +97,9 @@ function Send() {
       },
     });
 
-  useEffect(() => {
-    console.log(watch("forms"));
-  });
+  // useEffect(() => {
+  //   console.log(watch("forms"));
+  // });
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -110,20 +110,6 @@ function Send() {
     append({
       email: "",
       variables: variableObj,
-    });
-  };
-
-  const getFormsWithContent = (data: SendFormsValues) => {
-    return data.forms.map((form) => {
-      let content = template?.content || "";
-      content = content.replace(/{{\s*([\w\d_]+)\s*}}/g, (_, varName) => {
-        return form.variables[varName] ?? "";
-      });
-      return {
-        to: form.email,
-        subject: template?.subject || "",
-        body: content,
-      };
     });
   };
 
@@ -150,7 +136,7 @@ function Send() {
   // Helper to send emails with content
   const doSendEmails = async () => {
     const values = getValues();
-    const formsWithContent = getFormsWithContent(values);
+    const formsWithContent = getFormsWithContent(values, template!);
     sendEmails({ forms: formsWithContent });
   };
 
