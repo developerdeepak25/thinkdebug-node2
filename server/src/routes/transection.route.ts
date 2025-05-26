@@ -88,29 +88,31 @@ router.get("/statement", async (req, res) => {
               $cond: [{ $eq: ["$type", "Deposit"] }, "$amount", 0],
             },
           },
-          totalWithdrawals: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "Withdrawal"] }, "$amount", 0],
-            },
-          },
-          totalLoanTaken: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "Loan"] }, "$amount", 0],
-            },
-          },
-          totalRepaid: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "Repayment"] }, "$amount", 0],
-            },
-          },
-          totalShares: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "Share Purchase"] }, "$amount", 0],
-            },
-          },
+          
         },
       },
     ]);
+
+    // totalWithdrawals: {
+    //     $sum: {
+    //       $cond: [{ $eq: ["$type", "Withdrawal"] }, "$amount", 0],
+    //     },
+    //   },
+    //   totalLoanTaken: {
+    //     $sum: {
+    //       $cond: [{ $eq: ["$type", "Loan"] }, "$amount", 0],
+    //     },
+    //   },
+    //   totalRepaid: {
+    //     $sum: {
+    //       $cond: [{ $eq: ["$type", "Repayment"] }, "$amount", 0],
+    //     },
+    //   },
+    //   totalShares: {
+    //     $sum: {
+    //       $cond: [{ $eq: ["$type", "Share Purchase"] }, "$amount", 0],
+    //     },
+    //   },
 
     console.log("statement", statement);
     res.status(200).json({
