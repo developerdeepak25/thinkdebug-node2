@@ -76,7 +76,7 @@ router.get("/statement", async (req, res) => {
     //   },
     //   { $addFields: { count: { $size: "$statement" } } },
     // ])
-  const statement =  Transaction.aggregate([
+  const statement =  await Transaction.aggregate([
       {
         $match: { userId },
       },
